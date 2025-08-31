@@ -94,8 +94,8 @@ def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk
         st.info("[+] Using voice conversion model: freevc")
     except Exception as e:
         st.warning(f"[!] freevc not available, falling back to freevc. Error: {e}")
-        vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc24", gpu=False)
-        st.info("[+] Using voice conversion model: freevc24")
+        vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc", gpu=False)
+        st.info("[+] Using voice conversion model: freevc")
     # try:
     #     vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc24", gpu=False)
     #     st.info("[+] Using voice conversion model: freevc24")

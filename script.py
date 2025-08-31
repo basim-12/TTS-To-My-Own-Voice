@@ -43,7 +43,10 @@ def split_text(text, max_chars=1500):
 
 
 def generate_book_tts(text, output_file):
-    tts = TTS(model_name="tts_models/en/ljspeech/glow-tts", progress_bar=False, gpu=False)
+    tts = TTS(model_name="tts_models/en/vctk/vits", progress_bar=False, gpu=False)
+
+    speaker = tts.speakers[0]
+    st.info(f"[+] Using speaker: {speaker}")
 
     # Split text into manageable chunks
     chunks = split_text(text)
@@ -55,27 +58,26 @@ def generate_book_tts(text, output_file):
     for i, chunk in enumerate(chunks):
         temp_file = f"chunk_{i}.wav"
         try:
-            tts.tts_to_file(text=chunk, file_path=temp_file)
+            tts.tts_to_file(text=chunk, speaker=speaker, file_path=temp_file)
             temp_files.append(temp_file)
             progress.progress((i + 1) / len(chunks))
         except Exception as e:
             st.warning(f"[!] Skipping chunk {i} due to error: {e}")
 
-    # Merge all chunks
+
     final_audio = AudioSegment.empty()
     for temp_file in temp_files:
         final_audio += AudioSegment.from_wav(temp_file)
         os.remove(temp_file)
 
-    # Save to disk (optional, keeps compatibility)
     final_audio.export(output_file, format="wav")
 
-    # Also return as in-memory bytes for Streamlit playback
     audio_bytes = BytesIO()
     final_audio.export(audio_bytes, format="wav")
     audio_bytes.seek(0)
 
     return audio_bytes
+
 
 
 def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk_ms=15000):

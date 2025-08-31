@@ -81,7 +81,6 @@ def generate_book_tts(text, output_file):
 
 
 def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk_ms=15000):
-    """Convert generated speech to user's voice using Coqui voice conversion (with chunking)."""
 
     if hasattr(reference_voice_file, "read"):
         ref_path = os.path.join(OUTPUT_DIR, "user_voice_sample.wav")
@@ -90,8 +89,15 @@ def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk
     else:
         ref_path = reference_voice_file  # already a path
 
-    vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc24", gpu=False)
+    try:
+        vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc24", gpu=False)
+        st.info("[+] Using voice conversion model: freevc24")
+    except Exception as e:
+        st.warning(f"[!] freevc24 not available, falling back to freevc. Error: {e}")
+        vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc", gpu=False)
+        st.info("[+] Using voice conversion model: freevc")
 
+    
     audio = AudioSegment.from_wav(input_speech)
     chunks = [audio[i:i + chunk_ms] for i in range(0, len(audio), chunk_ms)]
 
@@ -113,11 +119,16 @@ def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk
         except Exception as e:
             st.warning(f"[!] Skipping chunk {i} due to error: {e}")
 
-        if os.path.exists(temp_in): os.remove(temp_in)
-        if os.path.exists(temp_out): os.remove(temp_out)
+        
+        if os.path.exists(temp_in):
+            os.remove(temp_in)
+        if os.path.exists(temp_out):
+            os.remove(temp_out)
 
+    # Save final merged audio
     converted_audio.export(output_file, format="wav")
     return output_file
+
 
 
 def main():

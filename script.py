@@ -81,7 +81,9 @@ def generate_book_tts(text, output_file):
 
 
 def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk_ms=15000):
+    """Convert generated speech to user's voice using Coqui voice conversion (with chunking)."""
 
+    # Save reference voice file
     if hasattr(reference_voice_file, "read"):
         ref_path = os.path.join(OUTPUT_DIR, "user_voice_sample.wav")
         with open(ref_path, "wb") as f:
@@ -89,22 +91,17 @@ def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk
     else:
         ref_path = reference_voice_file  # already a path
 
-    try:
-        vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc", gpu=False)
-        st.info("[+] Using voice conversion model: freevc")
-    except Exception as e:
-        st.warning(f"[!] freevc not available, falling back to freevc. Error: {e}")
-        vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc", gpu=False)
-        st.info("[+] Using voice conversion model: freevc")
-    # try:
-    #     vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc24", gpu=False)
-    #     st.info("[+] Using voice conversion model: freevc24")
-    # except Exception as e:
-    #     st.warning(f"[!] freevc24 not available, falling back to freevc. Error: {e}")
-    #     vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc", gpu=False)
-    #     st.info("[+] Using voice conversion model: freevc")
+    # Detect environment (cloud vs local)
+    is_cloud = os.environ.get("HOME", "").startswith("/home/appuser")
 
-    
+    if is_cloud:
+        vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/knnvc", gpu=False)
+        st.info("[+] Using voice conversion model: knnvc (Cloud)")
+    else:
+        vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc24", gpu=False)
+        st.info("[+] Using voice conversion model: freevc24 (Local)")
+
+    # Load input speech and split into chunks
     audio = AudioSegment.from_wav(input_speech)
     chunks = [audio[i:i + chunk_ms] for i in range(0, len(audio), chunk_ms)]
 
@@ -127,16 +124,20 @@ def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk
         except Exception as e:
             st.warning(f"[!] Skipping chunk {i} due to error: {e}")
 
-        
+        # Cleanup
         if os.path.exists(temp_in):
             os.remove(temp_in)
         if os.path.exists(temp_out):
             os.remove(temp_out)
 
-    progress.progress((i + 1) / len(chunks))
+        # Update progress (percentage)
+        progress_percent = int(((i + 1) / len(chunks)) * 100)
+        progress.progress((i + 1) / len(chunks), text=f"{progress_percent}% completed")
+
     # Save final merged audio
     converted_audio.export(output_file, format="wav")
     return output_file
+
 
 
 

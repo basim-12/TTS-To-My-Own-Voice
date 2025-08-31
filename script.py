@@ -60,7 +60,8 @@ def generate_book_tts(text, output_file):
         try:
             tts.tts_to_file(text=chunk, speaker=speaker, file_path=temp_file)
             temp_files.append(temp_file)
-            progress.progress((i + 1) / len(chunks))
+            progress_percent = int(((i + 1) / len(chunks)) * 100)
+            progress.progress((i + 1) / len(chunks), text=f"{progress_percent}% completed")
         except Exception as e:
             st.warning(f"[!] Skipping chunk {i} due to error: {e}")
 
@@ -91,15 +92,9 @@ def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk
     else:
         ref_path = reference_voice_file  # already a path
 
-    # Detect environment (cloud vs local)
-    is_cloud = os.environ.get("HOME", "").startswith("/home/appuser")
-
-    if is_cloud:
-        vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/knnvc", gpu=False)
-        st.info("[+] Using voice conversion model: knnvc (Cloud)")
-    else:
-        vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc24", gpu=False)
-        st.info("[+] Using voice conversion model: freevc24 (Local)")
+   
+    vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc24", gpu=False)
+    st.info("[+] Using voice conversion model: freevc24")
 
     # Load input speech and split into chunks
     audio = AudioSegment.from_wav(input_speech)
@@ -172,13 +167,18 @@ def main():
         else:
             if st.button("Generate Speech"):
                 text = extract_text_from_pdf(pdf_path)
-                if text:
+    
+                if not text:
+                    st.error("❌ No text could be extracted from this PDF.")
+                elif len(text.split()) < 4:  # less than 4 words
+                    st.warning("⚠️ PDF content is too short to generate meaningful speech.")
+                    st.write(f"Extracted text: {text}")
+                else:
                     st.info("Generating speech...")
                     audio_bytes = generate_book_tts(text, output_speech_path)
                     st.success("🎉 Speech generation complete!")
                     st.audio(audio_bytes, format="audio/wav")
-                else:
-                    st.error("No text could be extracted from this PDF.")
+
 
         # Voice Conversion section
         if os.path.exists(output_speech_path) and voice_sample:

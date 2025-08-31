@@ -102,6 +102,7 @@ def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk
     chunks = [audio[i:i + chunk_ms] for i in range(0, len(audio), chunk_ms)]
 
     converted_audio = AudioSegment.empty()
+    progress = st.progress(0)
 
     for i, chunk in enumerate(chunks):
         temp_in = os.path.join(OUTPUT_DIR, f"temp_in_{i}.wav")
@@ -125,6 +126,7 @@ def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk
         if os.path.exists(temp_out):
             os.remove(temp_out)
 
+    progress.progress((i + 1) / len(chunks))
     # Save final merged audio
     converted_audio.export(output_file, format="wav")
     return output_file

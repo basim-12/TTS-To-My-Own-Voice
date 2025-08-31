@@ -1,4 +1,6 @@
-streamlit
-PyPDF2
-TTS
-pydub
+streamlit==1.37.1
+PyPDF2==3.0.1
+pydub==0.25.1
+TTS==0.21.3
+torch==2.0.1
+torchaudio==2.0.2

@@ -88,7 +88,7 @@ def convert_to_user_voice(reference_voice_file, input_speech, output_file, chunk
     else:
         ref_path = reference_voice_file  # already a path
 
-    vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc", gpu=False)
+    vc_tts = TTS(model_name="voice_conversion_models/multilingual/vctk/freevc24", gpu=False)
 
     audio = AudioSegment.from_wav(input_speech)
     chunks = [audio[i:i + chunk_ms] for i in range(0, len(audio), chunk_ms)]
